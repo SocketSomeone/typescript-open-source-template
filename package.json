@@ -1,7 +1,7 @@
 {
 	"name": "typescript-open-source-template",
 	"description": "\uD83D\uDCDC My template for creating open-source projects",
-	"version": "4.0.2",
+	"version": "1.0.0",
 	"scripts": {
 		"build": "rimraf -rf dist && tsc -p tsconfig.json",
 		"prepublish:npm": "npm run build",
