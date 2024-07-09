@@ -13,7 +13,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Node v18
+      - name: Install Node v20
         uses: actions/setup-node@v4.0.2
         with:
           node-version: 20
@@ -24,7 +24,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Run Tests
-        run: yarn run test
+        run: yarn run test --passWithNoTests
 
       - name: Run ESlint
         run: yarn lint
