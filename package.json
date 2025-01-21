@@ -18,7 +18,9 @@
 	"author": "Alexey Filippov <socket.someone@gmail.com>",
 	"license": "MIT",
 	"keywords": [],
-	"dependencies": {},
+	"dependencies": {
+		"eslint-plugin-prettier": "^5.2.3"
+	},
 	"devDependencies": {
 		"@commitlint/cli": "19.6.1",
 		"@commitlint/config-angular": "19.7.0",
