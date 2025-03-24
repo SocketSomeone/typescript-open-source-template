@@ -19,7 +19,7 @@
 	"license": "MIT",
 	"keywords": [],
 	"dependencies": {
-		"eslint-plugin-prettier": "^5.2.3"
+		"eslint-plugin-prettier": "^5.2.4"
 	},
 	"devDependencies": {
 		"@commitlint/cli": "19.8.0",
