@@ -34,3 +34,15 @@ jobs:
 
       - name: Run Tests
         run: yarn test:ci
+  trufflehog:
+    name: TruffleHog Secrets Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          head: ${{ github.ref_name }}
+          extra_args: --log-level=2 --results=verified,unknown
