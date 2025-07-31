@@ -1,0 +1,40 @@
+name: Security Scans
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  trufflehog:
+    name: TruffleHog Secrets Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          head: ${{ github.ref_name }}
+          extra_args: --log-level=2 --results=verified,unknown
+  cdxgen:
+    name: CycloneDX SBOM Generation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install CycloneDX CLI
+        run: npm install -g @cyclonedx/cdxgen
+
+      - name: Generate CycloneDX SBOM
+        run: cdxgen -o bom.json -t nodejs --deep
+
+      - name: Upload CycloneDX SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: bom
+          path: bom.json
+
+
