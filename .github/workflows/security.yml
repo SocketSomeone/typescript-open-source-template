@@ -9,6 +9,33 @@ permissions:
   contents: read
 
 jobs:
+  check-ghas:
+    name: Check GitHub Advanced Security
+    runs-on: ubuntu-latest
+    outputs:
+      ghas_enabled: ${{ steps.detect.outputs.ghas_enabled }}
+    steps:
+      - name: Check Advanced Security status
+        id: detect
+        run: |
+          echo "Fetching repository security settings..."
+          SECURITY_JSON=$(gh api repos/${{ github.repository }} --jq '.security_and_analysis // {}')
+          if [[ "$SECURITY_JSON" == "{}" ]]; then
+            echo "Advanced Security not enabled."
+            echo "ghas_enabled=false" >> $GITHUB_OUTPUT
+          else
+            ADVANCED_SECURITY=$(echo "$SECURITY_JSON" | jq -r '.advanced_security.status // "disabled"')
+            if [[ "$ADVANCED_SECURITY" == "enabled" ]]; then
+              echo "Advanced Security enabled."
+              echo "ghas_enabled=true" >> $GITHUB_OUTPUT
+            else
+              echo "Advanced Security disabled."
+              echo "ghas_enabled=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   trufflehog:
     name: TruffleHog Secrets Scan
     runs-on: ubuntu-latest
@@ -42,6 +69,8 @@ jobs:
           path: bom.json
 
   dependency-review:
+    needs: check-ghas
+    if: needs.check-ghas.outputs.ghas_enabled == 'true'
     name: Dependency Review
     permissions:
       contents: read
@@ -58,6 +87,8 @@ jobs:
           fail-on-severity: moderate
 
   trivy:
+    needs: check-ghas
+    if: needs.check-ghas.outputs.ghas_enabled == 'true'
     name: Trivy Vulnerability Scan
     runs-on: ubuntu-latest
     permissions:
@@ -71,13 +102,12 @@ jobs:
         uses: aquasecurity/trivy-action@0.32.0
         with:
           scan-type: 'fs'
-          ignore-unfixed: true
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
-          exit-code: 0
 
       - name: Upload Trivy scan results to GitHub Security tab
+        if: steps.check_gh_security.outputs.skip != 'true'
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
@@ -89,3 +119,4 @@ jobs:
           scan-type: 'config'
           hide-progress: false
           format: 'table'
+          skip-setup-trivy: true
