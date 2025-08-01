@@ -19,7 +19,7 @@ jobs:
       - name: Run TruffleHog
         uses: trufflesecurity/trufflehog@v3.90.2
         with:
-          head: ${{ github.ref_name }}
+          head: ${{ github.event.pull_request.head.sha || github.sha }}
           extra_args: --log-level=2 --results=verified,unknown
 
   cdxgen:
