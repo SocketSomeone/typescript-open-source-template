@@ -24,14 +24,8 @@ jobs:
             echo "Advanced Security not enabled."
             echo "ghas_enabled=false" >> $GITHUB_OUTPUT
           else
-            ADVANCED_SECURITY=$(echo "$SECURITY_JSON" | jq -r '.advanced_security.status // "disabled"')
-            if [[ "$ADVANCED_SECURITY" == "enabled" ]]; then
-              echo "Advanced Security enabled."
-              echo "ghas_enabled=true" >> $GITHUB_OUTPUT
-            else
-              echo "Advanced Security disabled."
-              echo "ghas_enabled=false" >> $GITHUB_OUTPUT
-            fi
+            echo "Advanced Security settings found."
+            echo "ghas_enabled=true" >> $GITHUB_OUTPUT
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
