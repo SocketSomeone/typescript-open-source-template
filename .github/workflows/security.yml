@@ -1,0 +1,116 @@
+name: Security Scans
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+permissions:
+  contents: read
+
+jobs:
+  check-ghas:
+    name: Check GitHub Advanced Security
+    runs-on: ubuntu-latest
+    outputs:
+      ghas_enabled: ${{ steps.detect.outputs.ghas_enabled }}
+    steps:
+      - name: Check Advanced Security status
+        id: detect
+        run: |
+          echo "Fetching repository security settings..."
+          SECURITY_JSON=$(gh api repos/${{ github.repository }} --jq '.security_and_analysis // {}')
+          if [[ "$SECURITY_JSON" == "{}" ]]; then
+            echo "Advanced Security not enabled."
+            echo "ghas_enabled=false" >> $GITHUB_OUTPUT
+          else
+            echo "Advanced Security settings found."
+            echo "ghas_enabled=true" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  trufflehog:
+    name: TruffleHog Secrets Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run TruffleHog
+        uses: trufflesecurity/trufflehog@v3.90.2
+        with:
+          head: ${{ github.event.pull_request.head.sha || github.sha }}
+          extra_args: --log-level=2 --results=verified,unknown
+
+  cdxgen:
+    name: CycloneDX SBOM Generation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install CycloneDX CLI
+        run: npm install -g @cyclonedx/cdxgen
+
+      - name: Generate CycloneDX SBOM
+        run: cdxgen -o bom.json -t nodejs --deep
+
+      - name: Upload CycloneDX SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: bom
+          path: bom.json
+
+  dependency-review:
+    needs: check-ghas
+    if: needs.check-ghas.outputs.ghas_enabled == 'true'
+    name: Dependency Review
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          comment-summary-in-pr: on-failure
+          fail-on-severity: moderate
+
+  trivy:
+    needs: check-ghas
+    if: needs.check-ghas.outputs.ghas_enabled == 'true'
+    name: Trivy Vulnerability Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner in repo mode
+        uses: aquasecurity/trivy-action@0.32.0
+        with:
+          scan-type: 'fs'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        if: steps.check_gh_security.outputs.skip != 'true'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: 'trivy'
+
+      - name: Run Trivy vulnerability scanner in IaC mode
+        uses: aquasecurity/trivy-action@0.32.0
+        with:
+          scan-type: 'config'
+          hide-progress: false
+          format: 'table'
+          skip-setup-trivy: true
