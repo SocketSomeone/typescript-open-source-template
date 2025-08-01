@@ -5,6 +5,9 @@ on:
   pull_request:
     branches: [ master ]
 
+permissions:
+  contents: read
+
 jobs:
   trufflehog:
     name: TruffleHog Secrets Scan
@@ -18,6 +21,7 @@ jobs:
         with:
           head: ${{ github.ref_name }}
           extra_args: --log-level=2 --results=verified,unknown
+
   cdxgen:
     name: CycloneDX SBOM Generation
     runs-on: ubuntu-latest
@@ -37,4 +41,18 @@ jobs:
           name: bom
           path: bom.json
 
+  dependency-review:
+    name: Dependency Review
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          comment-summary-in-pr: on-failure
+          fail-on-severity: moderate
