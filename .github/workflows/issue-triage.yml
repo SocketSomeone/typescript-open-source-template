@@ -21,7 +21,7 @@ jobs:
           actions: "add-labels"
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ github.event.issue.number }}
-          labels: needs triage
+          labels: "needs triage"
 
   issue-labeled:
     name: Triage Issue On Label
