@@ -26,7 +26,7 @@
   color: 'aed5fc'
 - name: 'invalid'
   color: 'e4e669'
-- name: 'need repro'
+- name: 'needs repro'
   color: 'c66037'
 - name: 'performance'
   color: '80c042'

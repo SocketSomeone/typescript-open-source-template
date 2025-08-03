@@ -1,0 +1,44 @@
+name: Issue Triage
+on:
+  issues:
+    types:
+      - opened
+      - reopened
+
+jobs:
+  issue-labeled:
+    name: Add "needs triage" label
+    if: github.event.action == 'labeled'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Needs Repro
+        if: github.event.label.name == 'needs repro'
+        uses: actions-cool/issues-helper@v3
+        with:
+          actions: "create-comment"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            Hello @${{ github.event.issue.user.login }}.
+
+            Please provide a [minimal reproduction](https://stackoverflow.com/help/minimal-reproducible-example) using a GitHub repository or StackBlitz.
+
+            This will help us to better understand the issue and provide a solution.
+
+      - name: Wontfix
+        if: github.event.label.name == 'wontfix' && github.actor != 'github-actions[bot]'
+        uses: actions-cool/issues-helper@v3
+        with:
+          actions: "create-comment, close-issue"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            Hello @${{ github.event.issue.user.login }}.
+
+            This is an automated message to let you know that we've triaged this issue and unfortunately, we will be closing it as "not planned".
+
+            We sometimes have to close good ideas (even great ones!) because our limited resources simply do not allow us to pursue all possible features and improvements, and when fixing bugs we have to balance the impact of the bug against the effort required for the fix. Before closing this we considered several factors such as the amount of work involved, the severity of the problem, the number of people affected, whether a workaround is available, and the ongoing cost of maintenance.
+
+            If you're seeing this message and believe you can contribute to this issue, please consider submitting a PR yourself.
