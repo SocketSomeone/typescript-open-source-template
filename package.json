@@ -11,9 +11,11 @@
 		"prepare": "husky",
 		"format": "prettier --write \"src/**/*.ts\"",
 		"lint": "eslint --ignore-pattern .gitignore {integration,src}/**/*.ts",
+		"lint:fix": "npm run lint -- --fix",
 		"test": "jest",
 		"test:watch": "jest --watch",
 		"test:cov": "jest --coverage",
+		"test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
 		"test:ci": "jest --ci --passWithNoTests --coverage"
 	},
 	"main": "./dist/index.js",
