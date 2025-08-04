@@ -12,7 +12,6 @@ permissions:
 
 jobs:
   check-ghas:
-    if: github.actor != 'dependabot[bot]'
     name: Check GitHub Advanced Security
     runs-on: ubuntu-latest
     outputs:
@@ -97,6 +96,7 @@ jobs:
 
   trufflehog:
     needs: check-ghas
+    if: needs.check-ghas.outputs.ghas_enabled == 'true' || github.actor != 'dependabot[bot]'
     name: TruffleHog Secrets Scan
     runs-on: ubuntu-latest
     steps:
@@ -111,6 +111,7 @@ jobs:
 
   trivy:
     needs: check-ghas
+    if: needs.check-ghas.outputs.ghas_enabled == 'true' || github.actor != 'dependabot[bot]'
     name: Trivy Vulnerability Scan
     runs-on: ubuntu-latest
     permissions:
