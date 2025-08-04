@@ -2,6 +2,7 @@ name: Cleanup cache
 
 permissions:
   contents: read
+  actions: write
 
 on:
   schedule:
